@@ -1,0 +1,9 @@
+-cp src
+
+-lib hlsdl
+-lib haxe-strings
+
+-main Main
+-hl bin/interpreter.hl
+
+-debug

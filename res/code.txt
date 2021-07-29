@@ -1,0 +1,32 @@
+# This is a comment ignored by the interpreter
+
+# Math and lists
+Real w = (Real x = 15/2^3 - 1) + 2; 
+List<Real> y = [13, 2];
+Real y1 = y[0];
+List<Dynamic> z = [y1, true, w];
+List<List<Real>> nest = [[2, 3, y[1], 5], y];
+
+# Accessing nested lists
+nest[0] = [14, 31, 12, 2];
+Real nestZeroThree = nest[0][3] + 3;
+
+# Strings
+String text = "Number: " + 12;
+text = text + "/" + 2;
+
+# Booleans
+Bool condition = true || false or true;
+Bool condition2 = condition == false and 20 <= 13 && w > x;
+Bool condition3 = text == 'Number: 12/2';
+
+# If statements
+if condition2
+   condition = true; 
+elif condition3 {
+    Real xy = 13;
+    xy = xy/2;
+    condition = false;
+}
+
+Real xy = if condition 12 else 15;
