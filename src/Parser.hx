@@ -221,11 +221,29 @@ class Parser {
         nextToken();
         var condition = expression();
         cases.push({condition: condition, result: curlyStatement()});
+        
+        if( currentToken != null && 
+            currentToken.type == NewLine && 
+            peek(1) != null && 
+            (
+                peekToken.type == Elif || 
+                peekToken.type == Else
+            )
+        ) nextToken();
 
         while(currentToken != null && currentToken.type == Elif) {
             nextToken();
             var condition = expression();
             cases.push({condition: condition, result: curlyStatement()});
+
+            if( currentToken != null && 
+                currentToken.type == NewLine && 
+                peek(1) != null && 
+                (
+                    peekToken.type == Elif || 
+                    peekToken.type == Else
+                )
+            ) nextToken();
         }
 
         var elseCase: AstNode = null;
@@ -243,17 +261,18 @@ class Parser {
         
         var caseResult: AstNode;
         if(currentToken.type == OpenCurly) {
-            nextToken();
+            if(nextToken() && currentToken.type == CloseCurly) {
+                nextToken();
+                return new AstListNode([]);
+            }
+
             caseResult = statement();
             if(currentToken == null || currentToken.type != CloseCurly)
                 throw "} Expected";
             nextToken();
         }
-        else {
+        else
             caseResult = expression();
-            if(currentToken != null && currentToken.type == NewLine)
-                nextToken();
-        }
 
         return caseResult;
     }

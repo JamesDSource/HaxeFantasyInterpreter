@@ -1,32 +1,102 @@
 # This is a comment ignored by the interpreter
 
-# Math and lists
-Real w = (Real x = 15/2^3 - 1) + 2; 
-List<Real> y = [13, 2];
-Real y1 = y[0];
-List<Dynamic> z = [y1, true, w];
-List<List<Real>> nest = [[2, 3, y[1], 5], y];
+# To define a variable, you list the type then identifier
+Real x;
 
-# Accessing nested lists
-nest[0] = [14, 31, 12, 2];
-Real nestZeroThree = nest[0][3] + 3;
+# You can then set the variable with just the identifier and an '='
+x = 10;
 
-# Strings
-String text = "Number: " + 12;
-text = text + "/" + 2;
+# You can also initialize it on the same line as the definition
+Real y = 15;
 
-# Booleans
-Bool condition = true || false or true;
-Bool condition2 = condition == false and 20 <= 13 && w > x;
-Bool condition3 = text == 'Number: 12/2';
+# Math follow the basic orders of operations: PEMDAT
+Real sum = y + x;               # 25
+Real difference = y - x;        # 5
+Real multiplied = x*y;          # 150
+Real divided = x/y;             # .66666666667
+Real remainder = y%x;           # 5
+Real pythagSquared = y^2 + x^2; # 325
+Real sumSquared = (y + x)^2;    # 625
+Real random1 = y*x + x/2;       # 155
+Real random2 = x*(y + x - 3)/2; # 110
 
-# If statements
-if condition2
-   condition = true; 
-elif condition3 {
-    Real xy = 13;
-    xy = xy/2;
-    condition = false;
+# Strings are defined by text surrounded by " or '
+String greeting = "Hello World";
+
+# You can add to strings with numbers or other strings
+String name = "James";
+String specificGreeting = "Hello " + name;
+String miles = "You have: " + 13 + " more miles to go";
+
+# Booleans can be true or false
+Bool trueBool = true;
+Bool falseBool = false;
+
+# You can use comparison operators to get Booleans
+Bool equals = 6 == 15;      # false
+Bool greater = 7 > 7;       # false
+Bool greaterEqual = 7 >= 7; # true
+Bool lesser = 6 < 8;        # true
+Bool lesserEqual = 6 <= 5;   # false
+
+# The "and" or "&&" will return true if the booleans they are surrounded with are both true
+Bool and1 = true and true;      # true
+Bool and2 = 1 == 1 && false;    # false
+
+# The "or" or "||" will return true if either of the booleans they are surrounded with are true
+Bool or1 = true or false;       # true
+Bool or2 = or1 || 5 > 6;        # true
+
+# Lists are variables that hold an array of other values
+# The value that a list holds needs to be defined like this: List<Type>
+List<Real> numberList;
+
+# Lists are made by surrounding the elements in brackets, and seperating them with commas
+numberList = [1, 4, 6, 8, 10, 12];
+
+# You can access a list element by passing through it's index in brackets
+# The indexs of a List range from 0-(length - 1)
+# Setting the element
+numberList[0] = 2;
+# Getting the element
+Real numbElement = numberList[0];
+
+# Lists can even be nested inside other lists
+List<List<Real>> nested = [[3, 6, 10, 12, 15], [2, 4, 8, 16, 32], numberList];
+nested[0][2] = 9;
+
+# The Dynamic data type allows a variable to hold any value
+Dynamic dynamicVar = 10;
+dynamicVar = "Dynamic";
+dynamicVar = false;
+dynamicVar = [14, "String", false]; # This list will be auto-cast to List<Dynamic>, which is a list that can hold anything
+
+# If statements will run code if the condition provided is true
+if(true) {
+    # Run this
 }
 
-Real xy = if condition 12 else 15;
+# If the condition is false, you can provide an Else statement to run instead
+
+if(false) {
+    # Run this
+}
+else { # It will run this one
+    # Run this instead
+}
+
+# To provide a chain of conditions you can add an Elif statement
+# It will go through each condition until it finds the correct one
+
+if(1 == 2) {
+    # Run this
+}
+elif(5 > 3) { # It will run this one
+    # Do this instead
+}
+elif(1 <= 1) {
+    # If the previous 2 fail, and this doesn't, then run this
+}
+else {
+    # If all else fails
+}

@@ -1,0 +1,8 @@
+-cp src
+
+-lib haxe-strings
+
+-main Main
+-python bin/interpreter.py
+
+-debug

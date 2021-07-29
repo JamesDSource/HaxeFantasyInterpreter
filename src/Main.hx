@@ -44,10 +44,8 @@ class Main {
                     lString += dataText(list[i]);
                     if(i < list.length - 1)
                         lString += ", ";
-                    else 
-                        lString += "]";
                 }
-                
+                lString += "]";
                 return 'List<${type.type.identifier}> $lString';
         }
     }
