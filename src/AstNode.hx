@@ -2,6 +2,13 @@ import Data;
 
 class AstNode {
     public var isError: Bool = false;
+    public var positionStart: Int;
+    public var positionEnd: Int;
+
+    public function new(positionStart: Int, ?positionEnd: Int) {
+        this.positionStart = positionStart;
+        this.positionEnd = positionEnd != null ? positionEnd : positionStart;
+    }
 
     public function getResultType(context: Context): DataTypeInstance {
         return DataTypeInstance.fromData(getResult(context));
@@ -16,11 +23,69 @@ class AstNode {
     }
 }
 
+
+class AstSyntaxErrorNode extends AstNode {
+    public var message: String;
+    public var text: String;
+
+    private var lineStart: Int;
+    private var lineEnd: Int;
+
+    public static function expected(?expected: Null<String>, ?expectedAll: Array<String>, text: String, positionStart: Int, ?positionEnd: Int): AstSyntaxErrorNode {
+        var msg: String = "";
+        if(expectedAll != null) {
+            switch(expectedAll.length) {
+                case 0:
+                    // Do nothing
+                case 1:
+                    msg = expectedAll[0] + " ";
+                case 2:
+                    msg = '${expectedAll[0]} or ${expectedAll[1]} ';
+                case l:
+                    for(i in 0...l) {
+                        if(i == l - 1)
+                            msg += " or ";
+                        msg += expectedAll[i];
+                        if(i < l - 1)
+                            msg += ", ";
+                    }
+                    msg += " ";
+            }
+        }
+        else if(expected != null)
+            msg = expected + " ";
+
+        return new AstSyntaxErrorNode(msg + "Expected", text, positionStart, positionEnd);
+    }
+
+    public function new(message: String, text: String, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
+        this.message = message;
+        this.text = text;
+        isError = true;
+
+        var lines: Int = 1;
+        for(i in 0...this.positionEnd + 1) {
+            if(text.charAt(i) == "\n")
+                lines++;
+
+            if(i == this.positionStart)
+                lineStart = lines;
+        }
+        lineEnd = lines;
+    }
+
+    public override function toString():String {
+        return "ERROR: " + message + (lineStart == lineEnd ? ' on line $lineStart' : ' from line $lineStart to $lineEnd');
+    }
+}
+
 class AstDataTypeNode extends AstNode {
     public var type: DataType;
     public var dependencies: Array<AstNode> = [];
 
-    public function new(type: DataType, ?dependencies: Array<AstNode>) {
+    public function new(type: DataType, ?dependencies: Array<AstNode>, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.type = type;
         if(dependencies != null)
             this.dependencies = dependencies;
@@ -55,7 +120,8 @@ class AstDataTypeNode extends AstNode {
 class AstNumbNode extends AstNode {
     public var value: Float;
 
-    public function new(value: Float) {
+    public function new(value: Float, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.value = value;
     }
 
@@ -75,7 +141,8 @@ class AstNumbNode extends AstNode {
 class AstStrNode extends AstNode {
     public var value: String;
 
-    public function new(value: String) {
+    public function new(value: String, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.value = value;
     }
 
@@ -95,7 +162,8 @@ class AstStrNode extends AstNode {
 class AstBoolNode extends AstNode {
     public var value: Bool;
 
-    public function new(value: Bool) {
+    public function new(value: Bool, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.value = value;
     }
 
@@ -126,7 +194,8 @@ class AstBinOpNode extends AstNode {
     public var right: AstNode;
     public var operatorToken: Tokenizer.TokenType;
     
-    public function new(left: AstNode, right: AstNode, operatorToken: Tokenizer.TokenType) {
+    public function new(left: AstNode, right: AstNode, operatorToken: Tokenizer.TokenType, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.left = left;
         this.right = right;
         this.operatorToken = operatorToken;
@@ -279,7 +348,8 @@ class AstUnaryOpNode extends AstNode {
     public var opToken: Tokenizer.TokenType;
     public var node: AstNode;
     
-    public function new(opToken: Tokenizer.TokenType, node: AstNode) {
+    public function new(opToken: Tokenizer.TokenType, node: AstNode, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.opToken = opToken;
         this.node = node;
     }
@@ -317,7 +387,8 @@ class AstUnaryOpNode extends AstNode {
 class AstVarAccessNode extends AstNode {
     public var variableName: String;
 
-    public function new(variableName: String) {
+    public function new(variableName: String, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.variableName = variableName;
     }
 
@@ -338,7 +409,8 @@ class AstAssignmentNode extends AstNode {
     public var initType: AstNode;
     public var assignedTo: AstNode;
 
-    public function new(variableName: String, ?initType: AstNode, ?assignedTo: AstNode) {
+    public function new(variableName: String, ?initType: AstNode, ?assignedTo: AstNode, positionStart: Int, positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.variableName = variableName;
         this.initType = initType;
         this.assignedTo = assignedTo;
@@ -388,7 +460,8 @@ class AstArrayAccessNode extends AstNode {
     public var index: AstNode;
     public var assign: AstNode;
     
-    public function new(accessed: AstNode, index: AstNode, ?assign: AstNode) {
+    public function new(accessed: AstNode, index: AstNode, ?assign: AstNode, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.accessed = accessed;
         this.index = index;
         this.assign = assign;
@@ -433,7 +506,8 @@ class AstArrayAccessNode extends AstNode {
 class AstListNode extends AstNode {
     public var elementNodes: Array<AstNode> = [];
 
-    public function new(elementNodes: Array<AstNode>) {
+    public function new(elementNodes: Array<AstNode>, positionStart: Int, ?positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.elementNodes = elementNodes;
     }
 
@@ -481,7 +555,8 @@ class AstIfChainNode extends AstNode {
     public var cases: Array<IfCase>;
     public var elseCase: AstNode;
 
-    public function new(cases: Array<IfCase>, ?elseCase: AstNode) {
+    public function new(cases: Array<IfCase>, ?elseCase: AstNode, positionStart: Int, positionEnd: Int) {
+        super(positionStart, positionEnd);
         this.cases = cases.copy();
         this.elseCase = elseCase;
     }

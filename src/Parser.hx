@@ -7,14 +7,16 @@ typedef Error = {
 
 class Parser {
     public var tokens: Array<Tokenizer.Token>;
+    private var text: String;
     private var tokenIndex: Int;
     private var currentToken: Tokenizer.Token;
     private var peekToken: Tokenizer.Token;
 
     private var errors: Array<Error>;
 
-    public function new(tokens: Array<Tokenizer.Token>) {
-        this.tokens = tokens;
+    public function new(?tokens: Array<Tokenizer.Token>, text: String) {
+        this.text = text;
+        this.tokens = tokens != null ? tokens : Tokenizer.getTokens(text);
     }
 
     private function nextToken(i: Int = 1): Bool {
@@ -48,55 +50,66 @@ class Parser {
                 if(nextToken() && currentToken.type == Lesser) {   
                     nextToken();
                     var dependentType = factor();
+                    if(dependentType.isError)
+                        return dependentType;
                     dependencies.push(dependentType);
                     if(currentToken != null && currentToken.type == Greater)
                         nextToken();
                     else
-                        throw "> expected";
+                        return AstSyntaxErrorNode.expected(">", text, dependentType.positionEnd);
                 }                
-                return new AstDataTypeNode(type, dependencies);
+                return new AstDataTypeNode(type, dependencies, token.startPos, token.endPos);
             case Identifier(name):
                 nextToken();
-                return new AstVarAccessNode(name);
+                return new AstVarAccessNode(name, token.startPos, token.endPos);
             case Real(number):
                 nextToken();
-                return new AstNumbNode(number);
+                return new AstNumbNode(number, token.startPos, token.endPos);
             case Text(string):
                 nextToken();
-                return new AstStrNode(string);
+                return new AstStrNode(string, token.startPos, token.endPos);
             case BoolConst(bool):
                 nextToken();
-                return new AstBoolNode(bool);
+                return new AstBoolNode(bool, token.startPos, token.endPos);
             case Add, Sub:
                 nextToken();
                 var fact = factor();
-                return new AstUnaryOpNode(token.type, fact);
+                if(fact.isError)
+                    return fact;
+                return new AstUnaryOpNode(token.type, fact, token.startPos, fact.positionEnd);
             case OpenParen:
                 nextToken();
                 var expr = expression();
+                if(expr.isError)
+                    return expr;
                 if(currentToken != null && currentToken.type == CloseParen) {
                     nextToken();
                     return expr;
                 }
-                return null;
+                return AstSyntaxErrorNode.expected(")", text, peek(-1).endPos);
             case If:
                 return ifExpr();
             default:
-                return null;
+                return new AstSyntaxErrorNode("Invalid Token", text, token.startPos);
         }
     }
 
     private function accesssor(): AstNode {
         var left: AstNode = factor();
+        if(left.isError)
+            return left;
         
         var gotAccessor: Bool = false;
         while(currentToken != null && currentToken.type == OpenBracket) {
             nextToken();
             var index = expression();
+            if(index.isError)
+                return index;
+
             if(currentToken == null || currentToken.type != CloseBracket)
-                throw "] Expected";
+                return AstSyntaxErrorNode.expected("]", text, index.positionEnd);
+            left = new AstArrayAccessNode(left, index, left.positionStart, currentToken.endPos);
             nextToken();
-            left = new AstArrayAccessNode(left, index);
             gotAccessor = true;
         }
 
@@ -104,6 +117,8 @@ class Parser {
             var accessNode: AstArrayAccessNode = cast left;
             nextToken();
             accessNode.assign = expression();
+            if(accessNode.assign.isError)
+                return accessNode.assign;
         }
         
         return left;
@@ -130,14 +145,20 @@ class Parser {
         switch(token.type) {
             case DataType(type):
                 var type = factor();
+                if(type.isError)
+                    return type;
                 switch(currentToken.type) {
                     case Identifier(name):    
+                        var positionEnd: Int = currentToken.endPos;
                         var init: AstNode = null;
                         if(nextToken() && currentToken.type == Assign) {
                             nextToken();
                             init = expression();
+                            if(init.isError)
+                                return init;
+                            positionEnd = init.positionEnd;
                         }
-                        return new AstAssignmentNode(name, type, init);
+                        return new AstAssignmentNode(name, type, init, token.startPos, positionEnd);
                     
                     default:
                 }
@@ -147,7 +168,9 @@ class Parser {
                     case Assign:
                         nextToken(2);
                         var value = expression();
-                        return new AstAssignmentNode(name, null, value);
+                        if(value.isError)
+                            return value;
+                        return new AstAssignmentNode(name, null, value, token.startPos, value.positionEnd);
                     default:
                 }
             case OpenBracket:
@@ -160,7 +183,13 @@ class Parser {
 
     private function statement(): AstNode {
         var statements: Array<AstNode> = [expression()];
+        if(statements[0].isError)
+            return statements[0];
         var afterCurly: Bool = false;
+
+        var startPosition: Int = statements[0].positionStart;
+        var endPosition: Int = 0;
+
         while(  
                 currentToken != null && 
                 (
@@ -174,21 +203,33 @@ class Parser {
                 if(currentToken.type == CloseCurly)
                     break;
 
-                statements.push(expression());
+                var statement = expression();
+                if(statement.isError)
+                    return statement;
+                statements.push(statement);
+                endPosition = statement.positionEnd;
             }
         }
 
-        return new AstListNode(statements);
+        if(currentToken != null)
+            return AstSyntaxErrorNode.expected(";", text, endPosition);
+
+        return new AstListNode(statements, startPosition, endPosition);
     }
 
+    // Helper function for binary operation layers
     private function binOperation(func: () -> AstNode, operators: Array<Tokenizer.TokenType>): AstNode {
         var left = func();
+        if(left.isError)
+            return left;
 
         while(currentToken != null && operators.contains(currentToken.type)) {
             var opToken = currentToken.type;
             nextToken();
             var right = func();
-            left = new AstBinOpNode(left, right, opToken);
+            if(right.isError)
+                return right;
+            left = new AstBinOpNode(left, right, opToken, left.positionStart, right.positionEnd);
         }
 
         return left;
@@ -196,31 +237,49 @@ class Parser {
 
     private function listExpr(): AstNode {
         if(nextToken() && currentToken.type == CloseBracket) {
+            var pos = currentToken.startPos;
             nextToken();
-            return new AstListNode([]);
+            return new AstListNode([], pos);
         }
-        var elements: Array<AstNode> = [expression()];
 
+        var elements: Array<AstNode> = [expression()];
+        if(elements[0].isError)
+            return elements[0];
+        var startPosition = elements[0].positionStart;
+        var endPosition: Int = elements[0].positionEnd;
         while(currentToken.type == Comma) {
-            if(nextToken())
-                elements.push(expression());
+            if(nextToken()) {
+                var element = expression();
+                if(element.isError)
+                    return element;
+                elements.push(element);
+                endPosition = element.positionEnd;
+            }
             else
-                throw "] Expected";
+                return AstSyntaxErrorNode.expected("]", text, peek(-1).endPos);
         }
 
         if(currentToken == null || currentToken.type != CloseBracket)
-            throw ", or ] Expected";
+            return AstSyntaxErrorNode.expected([",", "]"], text, peek(-1).endPos);
 
         nextToken();
-        return new AstListNode(elements);
+        return new AstListNode(elements, startPosition, endPosition);
     }
 
     private function ifExpr(): AstNode {
         var cases: Array<IfCase> = [];
-        
+        var startPosition: Int = currentToken.startPos;
+        var endPosition: Int = currentToken.endPos;
+
         nextToken();
         var condition = expression();
-        cases.push({condition: condition, result: curlyStatement()});
+        if(condition.isError)
+            return condition;
+        
+        var cs = curlyStatement();
+        if(cs.isError)
+            return cs;
+        cases.push({condition: condition, result: cs});
         
         if( currentToken != null && 
             currentToken.type == NewLine && 
@@ -234,7 +293,14 @@ class Parser {
         while(currentToken != null && currentToken.type == Elif) {
             nextToken();
             var condition = expression();
-            cases.push({condition: condition, result: curlyStatement()});
+            if(condition.isError)
+                return condition;
+            
+            var cs = curlyStatement();
+            if(cs.isError)
+                return cs;
+            cases.push({condition: condition, result: cs});
+            endPosition = cs.positionEnd;
 
             if( currentToken != null && 
                 currentToken.type == NewLine && 
@@ -252,23 +318,26 @@ class Parser {
             elseCase = curlyStatement();
         }
 
-        return new AstIfChainNode(cases, elseCase);
+        return new AstIfChainNode(cases, elseCase, startPosition, endPosition);
     }
 
     private function curlyStatement(): AstNode {
         if(currentToken == null)
-            throw "{ or Expression Expected";
+            return AstSyntaxErrorNode.expected(["{", "Expression"], text, peek(-1).endPos);
         
         var caseResult: AstNode;
         if(currentToken.type == OpenCurly) {
             if(nextToken() && currentToken.type == CloseCurly) {
+                var pos = currentToken.startPos;
                 nextToken();
-                return new AstListNode([]);
+                return new AstListNode([], pos);
             }
 
             caseResult = statement();
+            if(caseResult.isError)
+                return caseResult;
             if(currentToken == null || currentToken.type != CloseCurly)
-                throw "} Expected";
+                return AstSyntaxErrorNode.expected("}", text, peek(-1).endPos);
             nextToken();
         }
         else

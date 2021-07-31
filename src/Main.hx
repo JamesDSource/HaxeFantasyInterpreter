@@ -1,14 +1,7 @@
 class Main {
     private static function main() {
-        var tokens = Tokenizer.getTokens(sys.io.File.getContent("res/code.txt"));
-        var tokenString: String = "\n----------------";
-        for(token in tokens) 
-            tokenString += "\n" + Tokenizer.toString(token.type);
-        tokenString += "\n----------------";
-
-        trace(tokenString);
-
-        var parser = new Parser(tokens);
+        var code: String = sys.io.File.getContent("res/code.txt");
+        var parser = new Parser(code);
         
         var tree = parser.parse();
         trace(tree.toString());

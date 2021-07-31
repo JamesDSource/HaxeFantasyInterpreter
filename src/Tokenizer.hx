@@ -42,7 +42,7 @@ enum TokenType {
 typedef Token = {
     type: TokenType,
     startPos: Int,
-    ?endPos: Null<Int>
+    endPos: Int
 }
 
 class Tokenizer {
@@ -207,33 +207,33 @@ class Tokenizer {
                         idleUntil = i + 2;
                     }
                     else
-                        tokens.push({type: Assign, startPos: i});
+                        tokens.push({type: Assign, startPos: i, endPos: i});
                 case "^":
-                    tokens.push({type:Pow, startPos: i});
+                    tokens.push({type:Pow, startPos: i, endPos: i});
                 case "+":
-                    tokens.push({type: Add, startPos: i});
+                    tokens.push({type: Add, startPos: i, endPos: i});
                 case "-":
-                    tokens.push({type: Sub, startPos: i});
+                    tokens.push({type: Sub, startPos: i, endPos: i});
                 case "*":
-                    tokens.push({type: Mult, startPos: i});
+                    tokens.push({type: Mult, startPos: i, endPos: i});
                 case "/":
-                    tokens.push({type: Div, startPos: i});
+                    tokens.push({type: Div, startPos: i, endPos: i});
                 case "%":
-                    tokens.push({type: Mod, startPos: i});
+                    tokens.push({type: Mod, startPos: i, endPos: i});
                 case ">":
                     if(!isLast && code.charAt(i + 1) == "=") {
                         tokens.push({type: GreaterEquals, startPos: i, endPos: i + 1});
                         idleUntil = i + 2;
                     }
                     else
-                        tokens.push({type: Greater, startPos: i});
+                        tokens.push({type: Greater, startPos: i, endPos: i});
                 case "<":
                     if(!isLast && code.charAt(i + 1) == "=") {
                         tokens.push({type: LesserEquals, startPos: i, endPos: i + 1});
                         idleUntil = i + 2;
                     }
                     else
-                        tokens.push({type: Lesser, startPos: i});
+                        tokens.push({type: Lesser, startPos: i, endPos: i});
                 case "&":
                     if(!isLast && code.charAt(i + 1) == "&") {
                         tokens.push({type: And, startPos: i, endPos: i + 1});
@@ -245,21 +245,21 @@ class Tokenizer {
                         idleUntil = i + 2;
                     }
                 case "(":
-                    tokens.push({type: OpenParen, startPos: i});
+                    tokens.push({type: OpenParen, startPos: i, endPos: i});
                 case ")":
-                    tokens.push({type: CloseParen, startPos: i});
+                    tokens.push({type: CloseParen, startPos: i, endPos: i});
                 case "{":
-                    tokens.push({type: OpenCurly, startPos: i});
+                    tokens.push({type: OpenCurly, startPos: i, endPos: i});
                 case "}":
-                    tokens.push({type: CloseCurly, startPos: i});
+                    tokens.push({type: CloseCurly, startPos: i, endPos: i});
                 case "[":
-                    tokens.push({type: OpenBracket, startPos: i});
+                    tokens.push({type: OpenBracket, startPos: i, endPos: i});
                 case "]":
-                    tokens.push({type: CloseBracket, startPos: i});
+                    tokens.push({type: CloseBracket, startPos: i, endPos: i});
                 case ",":
-                    tokens.push({type: Comma, startPos: i});
+                    tokens.push({type: Comma, startPos: i, endPos: i});
                 case ";":
-                    tokens.push({type: NewLine, startPos: i});
+                    tokens.push({type: NewLine, startPos: i, endPos: i});
             }
         }
 
@@ -322,10 +322,12 @@ class Tokenizer {
                 "ELIF";
             case Else:
                 "ELSE";
+            case OpenCurly:
+                "{";
+            case CloseCurly:
+                "}";
             case NewLine:
                 ";";
-            default:
-                "Default Token";
         }
     }
 }

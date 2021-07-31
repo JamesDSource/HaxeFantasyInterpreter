@@ -37,7 +37,7 @@ Bool equals = 6 == 15;      # false
 Bool greater = 7 > 7;       # false
 Bool greaterEqual = 7 >= 7; # true
 Bool lesser = 6 < 8;        # true
-Bool lesserEqual = 6 <= 5;   # false
+Bool lesserEqual = 6 <= 5;  # false
 
 # The "and" or "&&" will return true if the booleans they are surrounded with are both true
 Bool and1 = true and true;      # true
