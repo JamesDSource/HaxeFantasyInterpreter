@@ -36,6 +36,11 @@ enum TokenType {
     Elif;
     Else;
 
+    ClassObj;
+    Function;
+
+    FieldParameter(name: String, varOnly: Bool, funcOnly: Bool);
+
     NewLine;
 }
 
@@ -49,6 +54,29 @@ class Tokenizer {
     public static final DIGITS: String = "1234567890";
     public static final LETTERS: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_";
     public static final LETTERS_DIGITS: String = DIGITS + LETTERS;
+
+    public static final FIELD_PARAMETERS: Array<{identifier: String, varOnly: Bool, funcOnly: Bool}> = [
+        {
+            identifier: "private",
+            varOnly: false,
+            funcOnly: false
+        },
+        {
+            identifier: "public",
+            varOnly: false,
+            funcOnly: false
+        },
+        {
+            identifier: "static",
+            varOnly: false,
+            funcOnly: false
+        },
+        {
+            identifier: "override",
+            varOnly: false,
+            funcOnly: true
+        }
+    ];
 
     public static final KEYWORDS: Array<{identifier: String, tType: TokenType}> = [
         {
@@ -154,7 +182,7 @@ class Tokenizer {
 
                 // Checking if the word is a data type
                 var dataTypeFound: Bool = false;
-                for(dataType in DataTypes.TYPES_ARRAY) {
+                for(dataType in DataTypes.BASE_TYPES_ARRAY) {
                     if(dataType.identifier == word) {
                         tokens.push({type: DataType(dataType), startPos: i, endPos: idleUntil});
                         dataTypeFound = true;
@@ -322,6 +350,12 @@ class Tokenizer {
                 "ELIF";
             case Else:
                 "ELSE";
+            case ClassObj:
+                "CLASS";
+            case Function:
+                "FUNCTION";
+            case FieldParameter(name, varOnly, funcOnly):
+                'FIELD PARAMETER: $name';
             case OpenCurly:
                 "{";
             case CloseCurly:

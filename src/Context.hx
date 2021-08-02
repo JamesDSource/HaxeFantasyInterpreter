@@ -5,11 +5,6 @@ typedef Scope = {
     ?parent: Scope
 }
 
-typedef Variable = {
-    typeInst: DataTypeInstance,
-    value: Data
-}
-
 class Context {
     public var root(default, null): Scope;
     public var current(default, null): Scope;
@@ -69,20 +64,20 @@ class Context {
     }
 
     public function variableCanHave(variable: Variable, value: Data): Bool {
-        if(variable.typeInst.type == DataTypes.TYPES.DYNAMIC)
+        if(variable.typeInst.type == DataTypes.BASE_TYPES.DYNAMIC)
             return true;
 
         return switch (value) {
             case Nothing:
                 true;
             case Real(float):
-                return variable.typeInst.type == DataTypes.TYPES.REAL;
+                return variable.typeInst.type == DataTypes.BASE_TYPES.REAL;
             case Str(string):
-                return variable.typeInst.type == DataTypes.TYPES.STRING;
+                return variable.typeInst.type == DataTypes.BASE_TYPES.STRING;
             case Boolean(bool):
-                return variable.typeInst.type == DataTypes.TYPES.BOOL;
+                return variable.typeInst.type == DataTypes.BASE_TYPES.BOOL;
             case ArrayList(type, list):
-                if(variable.typeInst.type == DataTypes.TYPES.ARRAY_LIST)
+                if(variable.typeInst.type == DataTypes.BASE_TYPES.ARRAY_LIST)
                     return variable.typeInst.getDependency().equals(type);
 
                 return false;

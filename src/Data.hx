@@ -1,6 +1,24 @@
-typedef DataType = {
-    identifier: String,
-    typeDependencies: Int
+typedef Variable = {
+    typeInst: DataTypeInstance,
+    value: Data
+}
+
+typedef Func = {
+    returnType: DataTypeInstance,
+    parameters: Array<{name: String, type: DataTypeInstance, optional: Bool, ?defaultInit: Data}>,
+    method: AstNode
+}
+
+class DataType {
+    public var identifier(default, null): String;
+    public var typeDependencies(default, null): Int;
+
+    public var feilds: Map<String, Variable> = [];
+
+    public function new(identifier: String, typeDependencies: Int = 0) {
+        this.identifier = identifier;
+        this.typeDependencies = typeDependencies;
+    }
 }
 
 class DataTypeInstance {
@@ -14,13 +32,18 @@ class DataTypeInstance {
             case Nothing:
                 return null;
             case Real(float):
-                return new DataTypeInstance(DataTypes.TYPES.REAL);
+                return new DataTypeInstance(DataTypes.BASE_TYPES.REAL);
             case Str(string):
-                return new DataTypeInstance(DataTypes.TYPES.STRING);
+                return new DataTypeInstance(DataTypes.BASE_TYPES.STRING);
             case Boolean(bool):
-                return new DataTypeInstance(DataTypes.TYPES.BOOL);
+                return new DataTypeInstance(DataTypes.BASE_TYPES.BOOL);
             case ArrayList(type, list):
-                return new DataTypeInstance(DataTypes.TYPES.ARRAY_LIST, [type]);
+                return new DataTypeInstance(DataTypes.BASE_TYPES.ARRAY_LIST, [type]);
+            // TODO: Develop these because they are place holders to please the compiler
+            case Instance(scope):
+                return new DataTypeInstance(new DataType("Something"));
+            case Function(func):
+                return new DataTypeInstance(new DataType("Function"));
         }
     }
 
@@ -54,26 +77,26 @@ class DataTypeInstance {
 }
 
 class DataTypes {
-    public static final TYPES: {
+    public static final BASE_TYPES: {
         DYNAMIC: DataType,
         STRING: DataType,
         REAL: DataType,
         BOOL: DataType,
         ARRAY_LIST: DataType
     } = {
-        DYNAMIC:    {identifier: "Dynamic", typeDependencies: 0},
-        STRING:     {identifier: "String", typeDependencies: 0},
-        REAL:       {identifier: "Real", typeDependencies: 0},
-        BOOL:       {identifier: "Bool", typeDependencies: 0},
-        ARRAY_LIST: {identifier: "List", typeDependencies: 1}
+        DYNAMIC:    new DataType("Dynamic"),
+        STRING:     new DataType("String"),
+        REAL:       new DataType("Real"),
+        BOOL:       new DataType("Bool"),
+        ARRAY_LIST: new DataType("List", 1)
     }
 
-    public static final TYPES_ARRAY: Array<DataType> = [
-        TYPES.DYNAMIC,
-        TYPES.STRING,
-        TYPES.REAL,
-        TYPES.BOOL,
-        TYPES.ARRAY_LIST
+    public static final BASE_TYPES_ARRAY: Array<DataType> = [
+        BASE_TYPES.DYNAMIC,
+        BASE_TYPES.STRING,
+        BASE_TYPES.REAL,
+        BASE_TYPES.BOOL,
+        BASE_TYPES.ARRAY_LIST
     ];
 }
 
@@ -84,4 +107,6 @@ enum Data {
     Str(string: Null<String>);
     Boolean(bool: Null<Bool>);
     ArrayList(type: DataTypeInstance, list: Array<Data>);
+    Instance(scope: Context.Scope);
+    Function(func: Func);
 }

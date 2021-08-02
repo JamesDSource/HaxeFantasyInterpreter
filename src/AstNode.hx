@@ -126,7 +126,7 @@ class AstNumbNode extends AstNode {
     }
 
     public override function getResultType(context:Context):DataTypeInstance {
-        return new DataTypeInstance(DataTypes.TYPES.REAL);
+        return new DataTypeInstance(DataTypes.BASE_TYPES.REAL);
     }
 
     public override function getResult(context: Context):Data {
@@ -147,7 +147,7 @@ class AstStrNode extends AstNode {
     }
 
     public override function getResultType(context:Context):DataTypeInstance {
-        return new DataTypeInstance(DataTypes.TYPES.STRING);
+        return new DataTypeInstance(DataTypes.BASE_TYPES.STRING);
     }
 
     public override function getResult(context: Context):Data {
@@ -168,7 +168,7 @@ class AstBoolNode extends AstNode {
     }
 
     public override function getResultType(context:Context):DataTypeInstance {
-        return new DataTypeInstance(DataTypes.TYPES.BOOL);
+        return new DataTypeInstance(DataTypes.BASE_TYPES.BOOL);
     }
 
     public override function getResult(context: Context):Data {
@@ -355,7 +355,7 @@ class AstUnaryOpNode extends AstNode {
     }
 
     public override function getResultType(context:Context):DataTypeInstance {
-        return new DataTypeInstance(DataTypes.TYPES.REAL);
+        return new DataTypeInstance(DataTypes.BASE_TYPES.REAL);
     }
 
     public override function getResult(context: Context):Data {
@@ -422,7 +422,7 @@ class AstAssignmentNode extends AstNode {
 
         var variable = context.getVariable(variableName);
         if(variable == null)
-            return new DataTypeInstance(DataTypes.TYPES.DYNAMIC);
+            return new DataTypeInstance(DataTypes.BASE_TYPES.DYNAMIC);
         return variable.typeInst;
     }
 
@@ -469,7 +469,7 @@ class AstArrayAccessNode extends AstNode {
 
     public override function getResultType(context:Context):DataTypeInstance {
         var t = accessed.getResultType(context);
-        return t.type.typeDependencies > 0 ? accessed.getResultType(context).getDependency() : new DataTypeInstance(DataTypes.TYPES.DYNAMIC);
+        return t.type.typeDependencies > 0 ? accessed.getResultType(context).getDependency() : new DataTypeInstance(DataTypes.BASE_TYPES.DYNAMIC);
     }
 
     public override function getResult(context:Context):Data {
@@ -524,8 +524,8 @@ class AstListNode extends AstNode {
             }
         }
         if(type == null)
-            type = new DataTypeInstance(DataTypes.TYPES.DYNAMIC);
-        return new DataTypeInstance(DataTypes.TYPES.ARRAY_LIST, [type]);
+            type = new DataTypeInstance(DataTypes.BASE_TYPES.DYNAMIC);
+        return new DataTypeInstance(DataTypes.BASE_TYPES.ARRAY_LIST, [type]);
     }
 
     public override function getResult(context:Context): Data {
@@ -579,7 +579,7 @@ class AstIfChainNode extends AstNode {
         }
 
         if(type == null)
-            type = new DataTypeInstance(DataTypes.TYPES.DYNAMIC);
+            type = new DataTypeInstance(DataTypes.BASE_TYPES.DYNAMIC);
         return type;
     }
 
